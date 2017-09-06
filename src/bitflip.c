@@ -8,6 +8,7 @@
  
 int main (void)
 {
+  const int foobar = 10000;
  /* set pin 5 of PORTB for output */
  DDRB |= 1 << 5;
  /* set pin 1 of PORTB for input */
@@ -16,6 +17,6 @@ int main (void)
  while(1) {
   /* toggle pin 5 high to low to turn led on */
   PORTB ^= 1 << 5;
-  _delay_ms(BLINK_DELAY_MS);
+  _delay_ms(foobar);
  }
 }
