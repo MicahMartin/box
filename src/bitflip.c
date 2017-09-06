@@ -1,11 +1,10 @@
-#include "stdio.h"
-#include "avr/io.h"
-#include "avr/sfr_defs.h"
-#include "util/delay.h"
-
+#include <stdio.h>
+#include <avr/io.h>
+#include <avr/sfr_defs.h>
+#include <util/delay.h>
+#include "util/utils.h"
 // clean, but compiler errors when declared in code rather than
 // gcc command
-// #define BLINK_DELAY_MS 10000
  
 int main (void)
 {
