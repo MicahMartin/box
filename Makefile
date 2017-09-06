@@ -28,7 +28,6 @@ $(TARGET): $(OBJECTS)
 
 $(BUILDDIR)/%.o: $(SRCDIR)/%.c
 	@echo "Compiling" 
-	# this dir function will get the directory of the argument 
 	@mkdir -p $(dir $@)
 	@echo " $(CC) $(CFLAGS) $(INC) -c -o $@ $<"; $(CC) $(CFLAGS) $(INC) -c -o $@ $<
 
