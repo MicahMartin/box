@@ -10,6 +10,7 @@ int main (void){
  // 0 | 1 = 1
  // 1 | 1 = 1
  // This will ensure the bit is 1
+ // 1 is ...00000001 in binary. Shifting it by 5 will make it 00100000
  
  while(1) {
   /* toggle pin 5 high to low to turn led on */
