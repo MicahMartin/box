@@ -1,3 +1,4 @@
+#define __AVR_ATmega328P__
 #include <stdio.h>
 #include <avr/io.h>
 #include <avr/sfr_defs.h>
