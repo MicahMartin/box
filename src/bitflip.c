@@ -27,6 +27,16 @@ int main (void){
   PORTB |= (1 << 4);
 
   while(1) {
+    //This conditional checks to see if the 4th bit in PINB is 0 or 1.
+    //Lets assume pinB is currently 0000 0000, meaning all low.
+    //'anding' 0000 0000 over 1<<4 (0001 0000) would give us 0 straight up since 0 & anything is obviously false
+    // but if a bit has any 1 value in it, I guess that means it evaluates to true?
+
+    // tl;dr 0001 0000 is truthy
+    if (PINB & (1<<4)) {
+      //Button is pressed, do stuff.
+      
+    }
     /* toggle 5th bit high to low to turn led connected to the corresponding pin on and off */
     // PORTB ^= 1 << 5;
     // 0 xor 1 = 1
