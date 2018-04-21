@@ -8,7 +8,6 @@ SRCDIR := src
 BUILDDIR := build
 
 # Target binary directory
-TARGETDIR := bin
 TARGET := bin/bitflip
 
 # gets all .c files in source directory
@@ -34,6 +33,6 @@ $(BUILDDIR)/%.o: $(SRCDIR)/%.c
 
 clean:
 	@echo " Cleaning..."; 
-	@echo " $(RM) -r $(BUILDDIR) $(TARGET)"; $(RM) -r $(BUILDDIR) $(TARGETDIR)
+	@echo " $(RM) -r $(BUILDDIR) $(TARGET)"; $(RM) -r $(BUILDDIR) $(TARGET)
 
 .PHONY: clean
