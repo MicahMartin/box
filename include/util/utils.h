@@ -1,4 +1,4 @@
 #ifndef MYUTILS_H
 #define MYUTILS_H
-extern const int MY_DELAY;
+const int MY_DELAY = 10000;
 #endif /* ifndef  */
