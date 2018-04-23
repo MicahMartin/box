@@ -33,7 +33,8 @@ int main (void){
     // but if a bit has any 1 value in it, I guess that means it evaluates to true?
 
     // tl;dr 0001 0000 is truthy
-    if (PINB & (1<<4)) {
+    // note: pinx register is read only. it gets the state of the corresponding pin
+    if (!(PINB & (1<<4))) {
       //Button is pressed, do stuff.
       
     }
