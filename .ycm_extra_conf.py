@@ -38,7 +38,8 @@ flags = [
     'c',
     '-Wall',
     '-I', 'include',
-    '-I', '/usr/lib/avr/include',
+    '-I', '/usr/local/Cellar/avr-gcc/6.2.0/avr/include/',
+    #'-I', '/usr/lib/avr/include',
 ]
 
 

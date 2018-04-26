@@ -19,7 +19,8 @@ OBJECTS := $(SOURCES:$(SRCDIR)/%.c=$(BUILDDIR)/%.o)
 # flags being passed to GCC
 CFLAGS := -mmcu=atmega328p -DF_CPU=16000000UL -O
 # include all header files
-INC := -I include -I /usr/lib/gcc/avr/4.9.2/include
+INC := -I include -I /usr/local/Cellar/avr-gcc/6.2.0/avr/include
+#INC := -I include -I /usr/lib/gcc/avr/4.9.2/include
 
 $(TARGET): $(OBJECTS)
 	@echo " Linking... Object files are "
