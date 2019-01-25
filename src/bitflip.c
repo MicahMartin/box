@@ -3,11 +3,14 @@
 #include <avr/io.h>
 #include <avr/sfr_defs.h>
 #include <util/delay.h>
+#include <avr/eeprom.h>
 #include "util/utils.h"
- 
+
+enum STATE { IDLE, CHECKING, DISPENSING } STATE;
+
 int main (void){
   /* set 5th bit of DDRB to 1 for the corresponding pin to be used as output */
-  DDRB |= (1 << 5);
+  DDRB |= (1 << PB5);
   // 0 | 1 = 1
   // 1 | 1 = 1
   // This will ensure the bit is 1
@@ -24,13 +27,29 @@ int main (void){
   // This will ensure that pin4 is on input. 
 
   /*set 4th bit of PORTB to high so we can rely on internal pull up resistor*/ 
-  //PORTB |= (1 << 4);
+  PORTB |= (1 << PB4);
 
+  //TODO: check if anything is set in eeprom, if not set eeprom to current dateTime
+  
   while(1) {
+    STATE = IDLE;
+    switch (STATE) {
+      case IDLE:
+        // We're in idle state, check to see if pinB is pressed(pressed is 0 since we pulled pinb high)
+        STATE = (!(PINB & (1<<4))) ? CHECKING:IDLE;
+      break;
+      case CHECKING:
+      // read the last date from eeprom
+        
+      break;
+      case DISPENSING:
+        
+      break;
+    }
     //This conditional checks to see if the 4th bit in PINB is 0 or 1.
     //Lets assume pinB is currently 0000 0000, meaning all low.
     //'anding' 0000 0000 over 1<<4 (0001 0000) would give us 0 straight up since 0 & anything is obviously false
-    // but if a bit has any 1 value in it, I guess that means it evaluates to true?
+    // but if a bit has value in it, I guess that means it evaluates to true?
 
     // tl;dr 0001 0000 is truthy
     // note: pinx register is read only. it gets the state of the corresponding pin
