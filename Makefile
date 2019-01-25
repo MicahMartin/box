@@ -17,7 +17,7 @@ SOURCES := $(shell find $(SRCDIR) -type f -name *.c)
 # otherwise, patsubst works pretty much like String.replace in java
 OBJECTS := $(SOURCES:$(SRCDIR)/%.c=$(BUILDDIR)/%.o)
 # flags being passed to GCC
-CFLAGS := -mmcu=atmega328p -DF_CPU=16000000UL -O
+CFLAGS := -mmcu=atmega328p -DF_CPU=8000000UL -O
 # include all header files
 INC := -I include -I /usr/local/Cellar/avr-gcc/6.2.0/avr/include
 #INC := -I include -I /usr/lib/gcc/avr/4.9.2/include
