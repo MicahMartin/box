@@ -1,6 +1,7 @@
 #define __AVR_ATmega328P__
 #include <stdio.h>
 #include <avr/io.h>
+#include <avr/interrupt.h>
 #include <avr/sfr_defs.h>
 #include <util/delay.h>
 #include <avr/eeprom.h>
@@ -8,6 +9,51 @@
 
 enum STATE { IDLE, CHECKING, DISPENSING };
 volatile _Bool buttonDown;
+
+int ticks = 0;
+int seconds = 0;
+int minutes = 0;
+int hours = 0;
+int days = 0;
+int dayDispensed = 0;
+
+// Set up timer to generate an interrupt every 78 clock cycles with a prescaler of 1024
+// https://www.avrfreaks.net/forum/tut-c-creating-rtc-using-internal-countertimer?page=all
+void setupTimer(){
+  // TCCR0A and TCCR0B registers (timer control register0 A & B) control the mode and prescalar for timer0
+  
+  // Set timer0 to CTC mode
+  TCCR0A = (1 << WGM01);
+
+  // Every 78 ticks generate an interrupt
+  OCR0A = 78;
+  TIMSK0 = (1 << OCIE0A);
+  sei();
+
+  // Set the prescalar to 1024
+  TCCR0B = (1 << CS02) | (1 << CS00);
+}
+
+ISR(TIMER0_COMPA_vect){
+  ticks++;
+  if(ticks == 100){
+    ticks = 0;
+    seconds++;
+    if(seconds == 60){
+      seconds = 0;
+      minutes++;
+      if(minutes == 60){
+        minutes = 0;
+        hours++;
+        if(hours == 24){
+          hours = 0;
+          days++;
+        }
+      }
+    }
+  }
+
+}
 
 // Debouncing strategy. see https://www.avrfreaks.net/sites/default/files/forum_attachments/debounce.pdf
 void debounce(){
@@ -80,6 +126,7 @@ int main (void){
   enum STATE toyState = IDLE;
   // TODO: check if anything is set in eeprom, if not set eeprom to current time
   // NOTE: All the time shit https://www.avrfreaks.net/forum/tut-c-creating-rtc-using-internal-countertimer?page=all
+  // https://electronics.stackexchange.com/questions/49959/how-to-display-current-time?rq=1
   
   
 
@@ -98,12 +145,14 @@ int main (void){
       break;
 
       case CHECKING:
-      // read the last date from eeprom
-      
+        toyState = dayDispensed < days ? DISPENSING : IDLE;
       break;
 
       case DISPENSING:
+        // Set the 5th bit on portB to power the dispense mechanism
+        PORTB |= (1 << PB5);
         _delay_ms(DISPENSE_DELAY);
+        toyState = IDLE;
       break;
     }
     //This conditional checks to see if the 4th bit in PINB is 0 or 1.
