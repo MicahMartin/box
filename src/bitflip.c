@@ -15,7 +15,9 @@ int seconds = 0;
 int minutes = 0;
 int hours = 0;
 int days = 0;
-int dayDispensed = 0;
+// int dayDispensed = 0;
+int lastDispensed = 0;
+_Bool firstPress = true;
 
 // Set up timer to generate an interrupt every 78 clock cycles with a prescaler of 1024
 // https://www.avrfreaks.net/forum/tut-c-creating-rtc-using-internal-countertimer?page=all
@@ -26,7 +28,9 @@ void setupTimer(){
   TCCR0A = (1 << WGM01);
 
   // Every 78 ticks generate an interrupt
+  // output compare register for timer 0, comparison value A
   OCR0A = 78;
+  // TODO: remember what these 2 lines are doing
   TIMSK0 = (1 << OCIE0A);
   sei();
 
@@ -34,6 +38,7 @@ void setupTimer(){
   TCCR0B = (1 << CS02) | (1 << CS00);
 }
 
+// Interrupt when timer0 comparison is met 
 ISR(TIMER0_COMPA_vect){
   ticks++;
   if(ticks == 100){
@@ -59,15 +64,21 @@ ISR(TIMER0_COMPA_vect){
 void debounce(){
 
   static uint8_t counter = 0;
-  static _Bool buttonState = false;
+  static _Bool buttonState = false; // false = not pressed
 
-  _Bool currentState = (~PINB & (1<<4));
+  // If PIND1 is low, then the button is pressed
+  // PIND: 0000 0010 // 2nd bit is high because internal pullUp is set for PORTD1
+  // 1<<PD1: 0000 0010
+
+
+  // inverting the register since pullup is set for PORTD1
+  _Bool currentState = (~PIND & (1<<PD1));
 
   if (currentState != buttonState) {
     counter++;
     if (counter >= 4) {
       buttonState = currentState;
-      if (currentState != 0) {
+      if (currentState) {
         buttonDown = true;
       }
       counter = 0;
@@ -84,51 +95,75 @@ int main (void){
   /*
    from past kai: If you leave this project alone for a week(again), read this. love u
 
-   OutPin(direction) = 5th bit on DDRB register
-   OutPin(write) = 5th bit on PORTB register ( 0=0v?, 1=5v? )
-   OutPinValue(read) = 5th bit on PINB register
+  **NOTE
+    All the time shit:
 
-   ButtonPin(direction) = 4th bit on DDRB Register
-   ButtonPin(write) = 4th bit on PORTB register
-   ButtonPinValue(read) = 4th bit on PINB register
+    https://www.avrfreaks.net/forum/tut-c-creating-rtc-using-internal-countertimer?page=all
+    https://electronics.stackexchange.com/questions/49959/how-to-display-current-time?rq=1
+  **
+  
+  **NOTE
+    IO Register shit:
 
-   0 | 1 = 1
-   1 | 1 = 1
-   This will ensure the bit is 1
+    The DDxn bit in the DDRx Register selects the direction of this pin. 
+    If DDxn is written logic one, Pxn is configured as an output pin. If DDxn is written logic zero, Pxn is configured as an input pin.
+    If PORTxn is written logic one when the pin is configured as an input pin, the pull-up resistor is activated.
+    To switch the pull-up resistor off, PORTxn has to be written logic zero or the pin has to be configured as an output pin.
+    The port pins are tri-stated when reset condition becomes active, even if no clocks are running.
+  **
 
-   1 is ...00000001 in binary. Shifting it by 5 will make it 00100000.
+  **NOTE
+    Toggling a bit:
 
-   set 4th bit of DDRB to 0 for the corresponding pin to be used as input
-   DDRB &= ~(1 << 4);
-   ~(1<<x) is good to keep in mind. It will first create a bitmask of 0001 0000
-   then invert it with the notter (~) to get a mask of 11101111
-   So the comparison wont change a bit if its true, because 1 & 1 is 1
-   and it wont change a bit if its 0, because 0 & 1 is 0. 
-   so the only bit with potential to change is the false bit, since 1 & 0 is false.
-   This will ensure that pin4 is on input. 
+    PORTB ^= 1 << 5;
 
-   I really shouldnt have to write this out.
-   0 & 0 = 0
-   1 & 0 = 0
-   1 & 1 = 1
+    // 0 xor 1 = 1
+    // 1 xor 1 = 0
+    // Toggles
+  **
+     
+
+  **NOTE
+   Clearing a bit:
+
+   assume DDRD is currently 0101 1101. 
+
+   DDRD &= ~(1 << PD4);
+   ~(1 << 4) is good to keep in mind. 
+   It will first create a bitmask of 0001 0000 (1 << 4)
+   then invert it with the notter (~) to get a mask of 1110 1111.
+
+     0101 1101
+   & 1110 1111
+     _________
+     0 and 1 / 1 and 0 = 0
+     1 and 1 = 1
+     0 and 0 = 0
+
+   So the comparison wont change the bits we aren't worried about because if theyre true, 1 & 1 is 1
+   and it wont change those bits if theyre 0, because 0 & 1 is 0. 
+   so the only bit with potential to change is the cleared bit in the mask, since 1 & 0 is 0
+  **
+
   */
   
 
   
-  // set 5th bit of DDRB(Data direction register B) to 1 for the corresponding pin to be used as output.
-  // this pin will connect(and provide power) to the dispenser mechanism
-  DDRB |= (1 << PB5);
+  // Set 1st bit of DDRD for the corresponding pin to be used as output.
+  // This pin will connect(and provide power) to the dispenser mechanism
+  DDRD |= (1 << PD0);
 
-  // set 4th bit of PORTB to high so we can rely on internal pull up resistor 
-  PORTB |= (1 << PB4);
+  // Clear the 2nd bit of DDRD for the corresponding pin to be used as input
+  // This pin will connect to external pushButton
+  DDRD &= ~(1 << PD1);
 
-  // init state
+  // Set 2nd bit of PORTD to enable pullUp resistor
+  PORTD |= (1 << PD1);
+
+  // Init state
   enum STATE toyState = IDLE;
-  // TODO: check if anything is set in eeprom, if not set eeprom to current time
-  // NOTE: All the time shit https://www.avrfreaks.net/forum/tut-c-creating-rtc-using-internal-countertimer?page=all
-  // https://electronics.stackexchange.com/questions/49959/how-to-display-current-time?rq=1
-  
-  
+
+  // TODO: If we introduce an RTC... check if anything is set in eeprom, if not set eeprom to current time
 
   while(true) {
 
@@ -138,39 +173,37 @@ int main (void){
     switch (toyState) {
       case IDLE:
         // We're in idle state, check to see if button was pressed
-        // clear the 5th bit on portB incase we're coming back from dispensing state
-        PORTB &= ~(1 << PB5);
         toyState = buttonDown ? CHECKING : IDLE;
         buttonDown = false;
       break;
 
       case CHECKING:
-        toyState = dayDispensed < days ? DISPENSING : IDLE;
+        // TODO: Better logic to handle the first 'check'
+        // If first time button is pressed, go right to dispensing
+        toyState = (lastDispensed < minutes || firstPress) ? DISPENSING : IDLE;
       break;
 
       case DISPENSING:
-        // Set the 5th bit on portB to power the dispense mechanism
-        PORTB |= (1 << PB5);
+        // Last time we dispensed was like, now?
+        lastDispensed = minutes;
+
+        // Set the 1st bit on portD to power the dispense mechanism
+        PORTD |= (1 << PD0);
+        // Wait a bit, let mechanism do its thing
         _delay_ms(DISPENSE_DELAY);
+        // Clear the 1st bit on portD to stop powering the dispense mechanism
+        PORTD &= ~(1 << PD0);
+
+        // TODO: I smell a better elegant solution here...
+        firstPress = false;
+
+        // Return to idle
         toyState = IDLE;
+
       break;
     }
-    //This conditional checks to see if the 4th bit in PINB is 0 or 1.
-    //Lets assume pinB is currently 0000 0000, meaning all low.
-    //'anding' 0000 0000 over 1<<4 (0001 0000) would give us 0 straight up since 0 & anything is obviously false
-    // but if a bit has value in it, I guess that means it evaluates to true?
 
-    // tl;dr 0001 0000 is truthy
-    // note: pinx register is read only. it gets the state of the corresponding pin
-    //if (!(PINB & (1<<4))) {
-      //Button is pressed, do stuff.
-      
-    //}
-    /* toggle 5th bit high to low to turn led connected to the corresponding pin on and off */
-    PORTB ^= 1 << 5;
-    // 0 xor 1 = 1
-    // 1 xor 1 = 0
-    // Toggles
+    // Dont run too fast..
     _delay_ms(CLOCK_DELAY);
    }
 }
